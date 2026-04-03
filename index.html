@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Family Doctor Chat</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; margin: 0; background: #f6f7f9; }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 20px; }
+    .card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .row input[type="text"] { flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 10px; }
+    .row button { padding: 10px 14px; border: 0; border-radius: 10px; cursor: pointer; background: #111; color: #fff; }
+    .row button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .hint { color: #666; font-size: 12px; margin-top: 6px; }
+    .chat { height: 420px; overflow: auto; padding: 10px; background: #fafafa; border-radius: 12px; border: 1px solid #eee; }
+    .msg { margin: 10px 0; display: flex; }
+    .msg.user { justify-content: flex-end; }
+    .bubble { max-width: 75%; padding: 10px 12px; border-radius: 12px; white-space: pre-wrap; line-height: 1.35; }
+    .user .bubble { background: #111; color: #fff; border-bottom-right-radius: 4px; }
+    .bot .bubble { background: #fff; border: 1px solid #e6e6e6; border-bottom-left-radius: 4px; }
+    .meta { margin-top: 10px; font-size: 12px; color: #666; }
+    .meta pre { background: #0b1020; color: #d4e3ff; padding: 10px; border-radius: 10px; overflow:auto; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; }
+    .badge { font-size: 12px; padding: 4px 10px; border-radius: 999px; background: #eef2ff; color: #3b5bdb; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <h2 style="margin:0;">Family Doctor Q&A System (Frontend Demo)</h2>
+      <span class="badge" id="status">Disconnected</span>
+    </div>
+
+    <div class="card" style="margin-bottom:12px;">
+      <div class="row">
+        <label style="font-size:12px;color:#555;">API Base URL</label>
+        <input id="apiBase" type="text" value="http://127.0.0.1:8000" />
+        <button id="btnHealth">Check Backend</button>
+      </div>
+      <div class="hint">
+        Make sure backend is running:
+        <code>uvicorn app.main:app --reload --port 8000</code>
+        and CORS is enabled.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="chat" id="chat"></div>
+
+      <div style="height:10px;"></div>
+
+      <div class="row">
+        <input id="msg" type="text" placeholder="Describe your symptoms, e.g., I have been coughing for two days with mild fever" />
+        <button id="btnSend">Send</button>
+        <button id="btnClear" style="background:#444;">Clear</button>
+      </div>
+
+      <div class="meta">
+        <div>Debug Info (meta):</div>
+        <pre id="metaBox">{}</pre>
+      </div>
+    </div>
+  </div>
+
+<script>
+const chatEl = document.getElementById("chat");
+const msgEl = document.getElementById("msg");
+const metaBox = document.getElementById("metaBox");
+const apiBaseEl = document.getElementById("apiBase");
+const btnSend = document.getElementById("btnSend");
+const btnClear = document.getElementById("btnClear");
+const btnHealth = document.getElementById("btnHealth");
+const statusEl = document.getElementById("status");
+
+const sessionId = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
+
+function addMessage(role, text) {
+  const wrap = document.createElement("div");
+  wrap.className = "msg " + (role === "user" ? "user" : "bot");
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.textContent = text;
+  wrap.appendChild(bubble);
+  chatEl.appendChild(wrap);
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+function setStatus(ok, text) {
+  statusEl.textContent = text;
+  statusEl.style.background = ok ? "#ecfdf5" : "#fff1f2";
+  statusEl.style.color = ok ? "#047857" : "#be123c";
+}
+
+function renderReply(reply) {
+  if (typeof reply === "string") return reply;
+
+  if (reply && typeof reply === "object") {
+    const risk = reply["risk_level"] ?? "N/A";
+    const qs = reply["follow_up_questions"] ?? [];
+    const causes = reply["possible_causes"] ?? [];
+    const actions = reply["actions"] ?? [];
+    const emerg = reply["emergency_signs"] ?? [];
+    const disclaimer = reply["disclaimer"] ?? "N/A";
+
+    const listBlock = (arr) => {
+      if (!Array.isArray(arr) || arr.length === 0) return "None";
+      if (arr.length === 1 && String(arr[0]).trim().toLowerCase() === "none") return "None";
+      return arr.map(x => `- ${x}`).join("\n");
+    };
+
+    return [
+      `1) Risk Level: ${risk}`,
+      `2) Follow-up Questions:\n${listBlock(qs)}`,
+      `3) Possible Causes:\n${listBlock(causes)}`,
+      `4) Recommended Actions:\n${listBlock(actions)}`,
+      `5) Emergency Signs:\n${listBlock(emerg)}`,
+      `6) Disclaimer: ${disclaimer}`,
+    ].join("\n");
+  }
+
+  return "No response received.";
+}
+
+async function healthCheck() {
+  const base = apiBaseEl.value.trim().replace(/\/$/, "");
+  try {
+    const r = await fetch(base + "/healthz");
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    await r.json();
+    setStatus(true, "Connected ✅");
+  } catch (e) {
+    setStatus(false, "Disconnected ❌");
+    alert("Backend not connected:\n" + e.message);
+  }
+}
+
+async function send() {
+  const base = apiBaseEl.value.trim().replace(/\/$/, "");
+  const text = msgEl.value.trim();
+  if (!text) return;
+
+  addMessage("user", text);
+  msgEl.value = "";
+  btnSend.disabled = true;
+
+  try {
+    const res = await fetch(base + "/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: sessionId,
+        message: text
+      })
+    });
+
+    if (!res.ok) throw new Error("HTTP " + res.status);
+
+    const data = await res.json();
+    addMessage("bot", renderReply(data.reply));
+    metaBox.textContent = JSON.stringify(data.meta || {}, null, 2);
+    setStatus(true, "Connected ✅");
+  } catch (e) {
+    addMessage("bot", "Request failed:\n" + e.message);
+    setStatus(false, "Disconnected ❌");
+  } finally {
+    btnSend.disabled = false;
+    msgEl.focus();
+  }
+}
+
+btnSend.addEventListener("click", send);
+msgEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") send();
+});
+btnClear.addEventListener("click", () => {
+  chatEl.innerHTML = "";
+  metaBox.textContent = "{}";
+});
+btnHealth.addEventListener("click", healthCheck);
+
+healthCheck().catch(()=>{});
+</script>
+</body>
+</html>

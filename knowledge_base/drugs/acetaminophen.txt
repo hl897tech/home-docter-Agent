@@ -1,0 +1,27 @@
+# Acetaminophen (Paracetamol)
+
+## Description
+Acetaminophen is a commonly used medication for pain relief and fever reduction.
+
+## Indications
+- Fever
+- Headache
+- Mild to moderate pain
+
+## Dosage
+- Adults: 500–1000 mg every 4–6 hours (max 4000 mg/day)
+
+## Side Effects
+- Rare liver damage (especially overdose)
+- Nausea
+
+## Precautions
+- Avoid alcohol consumption
+- Do not exceed recommended dose
+
+## When to Seek Medical Care
+- Signs of overdose
+- Yellowing of skin (liver issues)
+
+## Disclaimer
+Use only as directed. Consult a doctor if unsure.

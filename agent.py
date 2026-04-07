@@ -10,7 +10,7 @@ from langchain_core.messages import SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_classic.agents import create_tool_calling_agent, AgentExecutor
 
-from tools import triage  # 你的规则分流工具（假设返回 {"level": "...", "reasons": [...], "action": "..."}）
+from tools import triage, search_medical_knowledge
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -46,12 +46,15 @@ def format_history(history: List[Tuple[str, str]]) -> str:
 
 def build_main_executor():
     llm = ChatOpenAI(model=MODEL_NAME, temperature=0, api_key=OPENAI_API_KEY)
-    tools = []  # later: tools = [triage, retrieve_docs]
+    tools = [search_medical_knowledge]
 
     prompt = ChatPromptTemplate.from_messages([
         SystemMessage(content=(
             "You are a Family Doctor Q&A assistant for health education and triage guidance. "
             "You must NOT provide a definitive diagnosis and you do NOT replace a clinician.\n\n"
+            "You have access to a medical knowledge base via the `search_medical_knowledge` tool. "
+            "ALWAYS call this tool first when the user describes symptoms or asks about a medical condition. "
+            "Use the retrieved information to inform your response.\n\n"
             "Your response MUST include ALL fields below:\n"
             "1) risk_level: one of [LOW, MEDIUM, HIGH]\n"
             "2) follow_up_questions: up to 3 items; if none, output ['None']\n"
@@ -78,7 +81,7 @@ def build_main_executor():
     ])
 
     agent = create_tool_calling_agent(llm=llm, tools=tools, prompt=prompt)
-    return AgentExecutor(agent=agent, tools=tools, verbose=False), llm
+    return AgentExecutor(agent=agent, tools=tools, verbose=True), llm
 
 
 def run_pipeline(user_text: str, history: Optional[List[Tuple[str, str]]] = None) -> dict:

@@ -1,0 +1,31 @@
+# Fever
+
+## Definition
+Fever is a temporary increase in body temperature, typically above 37.3°C (99.1°F), often due to an underlying illness.
+
+## Common Causes
+- Viral infections (e.g., flu, cold)
+- Bacterial infections
+- Inflammatory conditions
+- Heat exhaustion
+
+## Symptoms
+- Elevated body temperature
+- Sweating or chills
+- Headache
+- Fatigue
+
+## What You Can Do
+- Stay hydrated
+- Rest
+- Use antipyretics (e.g., acetaminophen)
+- Keep room well ventilated
+
+## When to Seek Medical Care
+- Temperature ≥ 39.5°C (103°F)
+- Fever lasting more than 3 days
+- Seizures or confusion
+- Infants under 3 months with fever
+
+## Disclaimer
+This information is for educational purposes only and does not replace professional medical advice.

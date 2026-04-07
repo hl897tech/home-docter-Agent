@@ -1,0 +1,31 @@
+# Hypertension
+
+## Definition
+Hypertension is a chronic condition where blood pressure is consistently elevated (≥130/80 mmHg).
+
+## Causes
+- Genetics
+- Poor diet (high salt intake)
+- Lack of physical activity
+- Stress
+- Obesity
+
+## Symptoms
+- Often asymptomatic
+- Headaches
+- Dizziness
+
+## What You Can Do
+- Reduce salt intake
+- Exercise regularly
+- Maintain healthy weight
+- Monitor blood pressure
+
+## When to Seek Medical Care
+- Blood pressure consistently ≥140/90 mmHg
+- Chest pain
+- Vision changes
+- Severe headache
+
+## Disclaimer
+Always consult a healthcare provider for diagnosis and treatment.
